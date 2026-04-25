@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcopy \"C:\\\\Users\\\\User\\\\Desktop\\\\DCS\\\\app\" \"C:\\\\Users\\\\User\\\\Desktop\\\\DCS\\\\backup_before_s3\\\\app\" /E /I /Y)",
+      "Bash(cp -r \"/c/Users/User/Desktop/DCS/app\" \"/c/Users/User/Desktop/DCS/backup_before_s3\")",
+      "Bash(cp -r \"/c/Users/User/Desktop/DCS/sql\" \"/c/Users/User/Desktop/DCS/backup_before_s3/sql\")"
+    ]
+  }
+}

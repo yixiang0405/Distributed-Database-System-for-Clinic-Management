@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if medicine else 'Add' }} Medicine{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1>
+      <i class="bi bi-{{ 'pencil-square' if medicine else 'capsule' }} me-2"></i>
+      {{ 'Edit Medicine' if medicine else 'Add New Medicine' }}
+    </h1>
+    <p>{{ 'Update medicine details or stock level' if medicine else 'Add a new medicine to the inventory' }}</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="card-modern" style="max-width: 680px; margin: 0 auto;">
+  <div class="card-header">
+    <i class="bi bi-capsule me-2"></i>Medicine Details
+  </div>
+  <div style="padding: 2rem;">
+    <form method="post" class="form-modern">
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-capsule me-1"></i>Medicine Name</label>
+        <input name="name" class="form-control" required placeholder="e.g. Paracetamol 500mg"
+               value="{{ medicine.name if medicine else '' }}">
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-tag me-1"></i>Category</label>
+          <select name="category" class="form-select">
+            <option value="">Select category...</option>
+            {% set cats = ['Analgesic','Antibiotic','Antihistamine','Antiviral',
+                           'Anti-inflammatory','Antacid','Vitamin','Other'] %}
+            {% for c in cats %}
+            <option value="{{ c }}" {{ 'selected' if medicine and medicine.category == c }}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-boxes me-1"></i>Unit</label>
+          <select name="unit" class="form-select">
+            <option value="">Select unit...</option>
+            {% for u in ['tablets','capsules','ml','mg','sachets','vials','strips'] %}
+            <option value="{{ u }}" {{ 'selected' if medicine and medicine.unit == u }}>{{ u }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-123 me-1"></i>Stock Quantity</label>
+          <input type="number" name="stock_qty" class="form-control" min="0" placeholder="0"
+                 value="{{ medicine.stock_qty if medicine else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-calendar-x me-1"></i>Expiry Date</label>
+          <input type="date" name="expiry_date" class="form-control"
+                 value="{{ medicine.expiry_date if medicine else '' }}">
+        </div>
+      </div>
+
+      <hr class="mb-4">
+      <div class="d-flex justify-content-end gap-2">
+        <a class="btn btn-light" href="{{ url_for('list_medicines') }}">Cancel</a>
+        <button class="btn-primary-modern" type="submit">
+          <i class="bi bi-check-lg me-1"></i>{{ 'Update' if medicine else 'Add' }} Medicine
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

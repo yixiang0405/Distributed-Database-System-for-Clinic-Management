@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Appointments — MediCare Clinic{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-calendar-event-fill me-2"></i>Appointments</h1>
+    <p>Schedule and track patient visits</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<div class="card-modern mb-4">
+  <div class="card-header">
+    <i class="bi bi-plus-circle me-2"></i>Schedule New Appointment
+  </div>
+  <div style="padding: 1.5rem;">
+    <form method="post" class="form-modern row g-3">
+      <div class="col-md-3">
+        <label class="form-label"><i class="bi bi-person me-1"></i>Patient</label>
+        <select name="patient_id" class="form-select" required>
+          <option value="">Select patient...</option>
+          {% for p in patients %}<option value="{{ p.id }}">{{ p.full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label"><i class="bi bi-person-badge me-1"></i>Doctor</label>
+        <select name="doctor_id" class="form-select" required>
+          <option value="">Select doctor...</option>
+          {% for d in doctors %}<option value="{{ d.id }}">{{ d.full_name }} — {{ d.specialty }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label"><i class="bi bi-clock me-1"></i>Date & Time</label>
+        <input type="datetime-local" name="scheduled_at" class="form-control" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label"><i class="bi bi-chat-left-text me-1"></i>Reason</label>
+        <input name="reason" class="form-control" placeholder="Check-up">
+      </div>
+      <div class="col-md-1 d-flex align-items-end">
+        <button class="btn-primary-modern w-100" type="submit" title="Add">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card-modern">
+  <div class="card-header">
+    <i class="bi bi-list-check me-2"></i>Upcoming & Recent Appointments
+  </div>
+  <table class="table-modern">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Reason</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td>
+          <div><strong>{{ a.scheduled_at.strftime('%b %d, %Y') }}</strong></div>
+          <div class="text-muted small">{{ a.scheduled_at.strftime('%I:%M %p') }}</div>
+        </td>
+        <td>
+          <span class="avatar">{{ a.patient.full_name[:1] }}</span>
+          {{ a.patient.full_name }}
+        </td>
+        <td>
+          <i class="bi bi-person-badge text-primary me-1"></i>
+          {{ a.doctor.full_name }}
+          <div class="text-muted small">{{ a.doctor.specialty }}</div>
+        </td>
+        <td>{{ a.reason or '—' }}</td>
+        <td><span class="badge-status {{ a.status }}">{{ a.status|capitalize }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">
+        <div class="empty-state">
+          <i class="bi bi-calendar-x"></i>
+          <div>No appointments scheduled yet</div>
+        </div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

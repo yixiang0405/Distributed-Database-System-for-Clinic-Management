@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Medical Records — MediCare Clinic{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-journal-medical me-2"></i>Medical Records</h1>
+    <p>Patient visit history, diagnoses and prescriptions</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-journal-text"></i></div>
+      <div>
+        <div class="stat-value">{{ records|length }}</div>
+        <div class="stat-label">Total Records</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="bi bi-person-check"></i></div>
+      <div>
+        <div class="stat-value">{{ records|map(attribute='patient_id')|unique|list|length }}</div>
+        <div class="stat-label">Patients with Records</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-clock-history"></i></div>
+      <div>
+        <div class="stat-value">{{ records[0].visit_date if records else '—' }}</div>
+        <div class="stat-label">Latest Visit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-ul me-2"></i>All Medical Records</span>
+    <a class="btn-primary-modern" href="{{ url_for('new_record') }}">
+      <i class="bi bi-plus-lg me-1"></i> New Record
+    </a>
+  </div>
+  <table class="table-modern">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Visit Date</th>
+        <th>Diagnosis</th>
+        <th>Prescription</th>
+        <th>File</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>
+          <span class="avatar">{{ r.patient.full_name[:1] }}</span>
+          <strong>{{ r.patient.full_name }}</strong>
+        </td>
+        <td>
+          <i class="bi bi-person-badge text-primary me-1"></i>
+          {{ r.doctor.full_name }}
+          <div class="text-muted small">{{ r.doctor.specialty }}</div>
+        </td>
+        <td>
+          <strong>{{ r.visit_date.strftime('%b %d, %Y') }}</strong>
+        </td>
+        <td>
+          {% if r.diagnosis %}
+            <span class="badge-status scheduled">{{ r.diagnosis }}</span>
+          {% else %}—{% endif %}
+        </td>
+        <td style="max-width:200px;">
+          <div class="text-truncate" title="{{ r.prescription }}">
+            {{ r.prescription or '—' }}
+          </div>
+        </td>
+        <td>
+          {% if r.file_url %}
+            {% if r.file_url.endswith('.pdf') %}
+              <a href="{{ r.file_url }}" target="_blank" class="btn-icon" title="{{ r.file_name }}">
+                <i class="bi bi-file-earmark-pdf text-danger"></i>
+              </a>
+            {% else %}
+              <a href="{{ r.file_url }}" target="_blank">
+                <img src="{{ r.file_url }}" alt="file"
+                     style="height:36px; width:36px; object-fit:cover;
+                            border-radius:6px; border:1px solid #e2e8f0;">
+              </a>
+            {% endif %}
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+        <td style="text-align:right;">
+          <a class="btn-icon" href="{{ url_for('edit_record', rid=r.id) }}" title="Edit">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="post" action="{{ url_for('delete_record', rid=r.id) }}" class="d-inline"
+                onsubmit="return confirm('Delete this record?')">
+            <button class="btn-icon danger" type="submit" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">
+        <div class="empty-state">
+          <i class="bi bi-journal-x"></i>
+          <div>No medical records yet</div>
+          <a class="btn-primary-modern mt-3 d-inline-block" href="{{ url_for('new_record') }}">
+            Add first record
+          </a>
+        </div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

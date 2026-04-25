@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if record else 'New' }} Medical Record{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1>
+      <i class="bi bi-{{ 'pencil-square' if record else 'journal-plus' }} me-2"></i>
+      {{ 'Edit Medical Record' if record else 'New Medical Record' }}
+    </h1>
+    <p>{{ 'Update visit details' if record else 'Record a patient visit, diagnosis and prescription' }}</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="card-modern" style="max-width: 780px; margin: 0 auto;">
+  <div class="card-header">
+    <i class="bi bi-journal-medical me-2"></i>Visit Details
+  </div>
+  <div style="padding: 2rem;">
+    <form method="post" class="form-modern" enctype="multipart/form-data">
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-person me-1"></i>Patient</label>
+          <select name="patient_id" class="form-select" required>
+            <option value="">Select patient...</option>
+            {% for p in patients %}
+            <option value="{{ p.id }}" {{ 'selected' if record and record.patient_id == p.id }}>
+              {{ p.full_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-person-badge me-1"></i>Doctor</label>
+          <select name="doctor_id" class="form-select" required>
+            <option value="">Select doctor...</option>
+            {% for d in doctors %}
+            <option value="{{ d.id }}" {{ 'selected' if record and record.doctor_id == d.id }}>
+              {{ d.full_name }} — {{ d.specialty }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Visit Date</label>
+          <input type="date" name="visit_date" class="form-control" required
+                 value="{{ record.visit_date if record else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Linked Appointment <span class="text-muted fw-normal">(optional)</span></label>
+          <select name="appointment_id" class="form-select">
+            <option value="">None</option>
+            {% for a in appointments %}
+            <option value="{{ a.id }}" {{ 'selected' if record and record.appointment_id == a.id }}>
+              {{ a.patient.full_name }} — {{ a.scheduled_at.strftime('%b %d, %Y') }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-clipboard2-pulse me-1"></i>Diagnosis</label>
+        <input name="diagnosis" class="form-control" placeholder="e.g. Acute upper respiratory infection"
+               value="{{ record.diagnosis or '' if record else '' }}">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-capsule me-1"></i>Prescription</label>
+        <textarea name="prescription" class="form-control" rows="3"
+                  placeholder="e.g. Paracetamol 500mg — 3x daily for 5 days">{{ record.prescription or '' if record else '' }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="bi bi-sticky me-1"></i>Notes <span class="text-muted fw-normal">(optional)</span></label>
+        <textarea name="notes" class="form-control" rows="2"
+                  placeholder="Any additional notes...">{{ record.notes or '' if record else '' }}</textarea>
+      </div>
+
+      <!-- File Upload -->
+      <div class="mb-4">
+        <label class="form-label"><i class="bi bi-paperclip me-1"></i>Attach File
+          <span class="text-muted fw-normal">(X-ray, lab result, scan — JPG, PNG, PDF)</span>
+        </label>
+
+        {% if record and record.file_url %}
+        <div class="mb-2 p-3 rounded d-flex align-items-center gap-3"
+             style="background:#f0fdf4; border:1px solid #bbf7d0;">
+          <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
+          <div>
+            <div class="fw-600 small">Current file:</div>
+            {% if record.file_url.endswith('.pdf') %}
+              <a href="{{ record.file_url }}" target="_blank" class="text-primary small">
+                <i class="bi bi-file-earmark-pdf me-1"></i>{{ record.file_name }}
+              </a>
+            {% else %}
+              <a href="{{ record.file_url }}" target="_blank">
+                <img src="{{ record.file_url }}" alt="attached file"
+                     style="max-height:80px; border-radius:6px; border:1px solid #e2e8f0;">
+              </a>
+            {% endif %}
+          </div>
+          <div class="text-muted small ms-auto">Upload a new file below to replace</div>
+        </div>
+        {% endif %}
+
+        <div class="upload-zone" id="uploadZone"
+             style="border:2px dashed #cbd5e1; border-radius:12px; padding:1.5rem;
+                    text-align:center; cursor:pointer; transition:all 0.2s; background:#f8fafc;">
+          <i class="bi bi-cloud-upload fs-2 text-muted"></i>
+          <div class="mt-2 text-muted">Drag & drop or click to upload</div>
+          <div class="text-muted small">JPG, PNG, PDF — max 10MB</div>
+          <input type="file" name="patient_file" id="fileInput"
+                 accept=".jpg,.jpeg,.png,.pdf"
+                 style="position:absolute; width:100%; height:100%; top:0; left:0; opacity:0; cursor:pointer;">
+        </div>
+        <div id="filePreview" class="mt-2" style="display:none;">
+          <span class="badge-status scheduled">
+            <i class="bi bi-check-circle me-1"></i>
+            <span id="fileName"></span>
+          </span>
+        </div>
+      </div>
+
+      <script>
+        const input = document.getElementById('fileInput');
+        const zone  = document.getElementById('uploadZone');
+        const preview = document.getElementById('filePreview');
+        const nameEl  = document.getElementById('fileName');
+        input.addEventListener('change', () => {
+          if (input.files[0]) {
+            nameEl.textContent = input.files[0].name;
+            preview.style.display = 'block';
+            zone.style.borderColor = '#0ea5e9';
+            zone.style.background  = '#f0f9ff';
+          }
+        });
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='#0ea5e9'; });
+        zone.addEventListener('dragleave', () => zone.style.borderColor='#cbd5e1');
+        zone.addEventListener('drop', e => {
+          e.preventDefault();
+          input.files = e.dataTransfer.files;
+          input.dispatchEvent(new Event('change'));
+        });
+      </script>
+
+      <hr class="mb-4">
+      <div class="d-flex justify-content-end gap-2">
+        <a class="btn btn-light" href="{{ url_for('list_records') }}">Cancel</a>
+        <button class="btn-primary-modern" type="submit">
+          <i class="bi bi-check-lg me-1"></i>{{ 'Update' if record else 'Save' }} Record
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

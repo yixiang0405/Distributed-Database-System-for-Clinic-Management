@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if patient else 'New' }} Patient{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1>
+      <i class="bi bi-{{ 'pencil-square' if patient else 'person-plus-fill' }} me-2"></i>
+      {{ 'Edit Patient' if patient else 'Register New Patient' }}
+    </h1>
+    <p>{{ 'Update existing patient record' if patient else 'Add a new patient to the clinic' }}</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="card-modern" style="max-width: 720px; margin: 0 auto;">
+  <div class="card-header">
+    <i class="bi bi-person-vcard me-2"></i>Patient Information
+  </div>
+  <div style="padding: 2rem;">
+    <form method="post" class="form-modern">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label"><i class="bi bi-person me-1"></i>Full Name</label>
+          <input name="full_name" class="form-control" required placeholder="e.g. Alice Wong"
+                 value="{{ patient.full_name if patient else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Date of Birth</label>
+          <input type="date" name="dob" class="form-control" required
+                 value="{{ patient.dob if patient else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label"><i class="bi bi-telephone me-1"></i>Phone</label>
+          <input name="phone" class="form-control" placeholder="+65 9123 4567"
+                 value="{{ patient.phone if patient else '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label"><i class="bi bi-envelope me-1"></i>Email</label>
+          <input type="email" name="email" class="form-control" placeholder="patient@example.com"
+                 value="{{ patient.email if patient else '' }}">
+        </div>
+      </div>
+      <hr class="my-4">
+      <div class="d-flex justify-content-end gap-2">
+        <a class="btn btn-light" href="{{ url_for('list_patients') }}">Cancel</a>
+        <button class="btn-primary-modern" type="submit">
+          <i class="bi bi-check-lg me-1"></i>{{ 'Update' if patient else 'Save' }} Patient
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

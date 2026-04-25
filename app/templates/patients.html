@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Patients — MediCare Clinic{% endblock %}
+
+{% block header %}
+<section class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-people-fill me-2"></i>Patients</h1>
+    <p>Manage patient records across all clinic locations</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+      <div>
+        <div class="stat-value">{{ patients|length }}</div>
+        <div class="stat-label">Total Patients</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon teal"><i class="bi bi-journal-medical"></i></div>
+      <div>
+        <div class="stat-value">{{ record_count }}</div>
+        <div class="stat-label">Medical Records</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-capsule"></i></div>
+      <div>
+        <div class="stat-value">{{ medicine_count }}</div>
+        <div class="stat-label">Medicines in Stock</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-ul me-2"></i>Patient Directory</span>
+    <a class="btn-primary-modern" href="{{ url_for('new_patient') }}">
+      <i class="bi bi-plus-lg me-1"></i> New Patient
+    </a>
+  </div>
+  <table class="table-modern">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Date of Birth</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td>
+          <span class="avatar">{{ p.full_name[:1] }}</span>
+          <strong>{{ p.full_name }}</strong>
+          <div class="text-muted small">ID #{{ '%04d' % p.id }}</div>
+        </td>
+        <td>{{ p.dob }}</td>
+        <td>{{ p.phone or '—' }}</td>
+        <td>{{ p.email or '—' }}</td>
+        <td style="text-align:right;">
+          <a class="btn-icon" href="{{ url_for('edit_patient', pid=p.id) }}" title="Edit">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="post" action="{{ url_for('delete_patient', pid=p.id) }}" class="d-inline"
+                onsubmit="return confirm('Delete {{ p.full_name }}?')">
+            <button class="btn-icon danger" type="submit" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <div>No patients registered yet</div>
+          <a class="btn-primary-modern mt-3 d-inline-block" href="{{ url_for('new_patient') }}">
+            Add your first patient
+          </a>
+        </div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
