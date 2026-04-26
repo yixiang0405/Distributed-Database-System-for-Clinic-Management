@@ -62,6 +62,27 @@ def upload_file(file):
     return file_url, original_name
 
 
+def get_presigned_url(file_url, expiry=3600):
+    """
+    If the file is on S3, return a pre-signed URL (expires in 1 hour).
+    If local, return the path as-is.
+    Pre-signed URLs let the browser access private S3 files temporarily.
+    """
+    bucket = os.getenv("S3_BUCKET")
+    if bucket and file_url and file_url.startswith("https://"):
+        import boto3
+        region = os.getenv("AWS_REGION", "ap-southeast-1")
+        s3 = boto3.client("s3", region_name=region)
+        # Extract the S3 key from the URL
+        key = file_url.split(f"{bucket}.s3.{region}.amazonaws.com/")[1]
+        return s3.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket, "Key": key},
+            ExpiresIn=expiry
+        )
+    return file_url
+
+
 def create_app():
     app = Flask(__name__)
 
@@ -168,7 +189,9 @@ def create_app():
     @app.route("/records")
     def list_records():
         records  = MedicalRecord.query.order_by(MedicalRecord.visit_date.desc()).all()
-        return render_template("records.html", records=records, host=HOSTNAME)
+        # Generate pre-signed URLs for S3 files (private bucket, temporary access)
+        presigned = {r.id: get_presigned_url(r.file_url) for r in records if r.file_url}
+        return render_template("records.html", records=records, presigned=presigned, host=HOSTNAME)
 
     @app.route("/records/new", methods=["GET", "POST"])
     def new_record():

@@ -88,13 +88,14 @@
         </td>
         <td>
           {% if r.file_url %}
-            {% if r.file_url.endswith('.pdf') %}
-              <a href="{{ r.file_url }}" target="_blank" class="btn-icon" title="{{ r.file_name }}">
+            {% set furl = presigned.get(r.id, r.file_url) %}
+            {% if r.file_name and r.file_name.endswith('.pdf') %}
+              <a href="{{ furl }}" target="_blank" class="btn-icon" title="{{ r.file_name }}">
                 <i class="bi bi-file-earmark-pdf text-danger"></i>
               </a>
             {% else %}
-              <a href="{{ r.file_url }}" target="_blank">
-                <img src="{{ r.file_url }}" alt="file"
+              <a href="{{ furl }}" target="_blank">
+                <img src="{{ furl }}" alt="file"
                      style="height:36px; width:36px; object-fit:cover;
                             border-radius:6px; border:1px solid #e2e8f0;">
               </a>
