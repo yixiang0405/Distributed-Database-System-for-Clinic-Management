@@ -243,9 +243,11 @@ def create_app():
         patients     = Patient.query.order_by(Patient.full_name).all()
         doctors      = Doctor.query.order_by(Doctor.full_name).all()
         appointments = Appointment.query.order_by(Appointment.scheduled_at.desc()).all()
+        file_presigned = get_presigned_url(r.file_url) if r.file_url else None
         return render_template("record_form.html", record=r,
                                patients=patients, doctors=doctors,
-                               appointments=appointments, host=HOSTNAME)
+                               appointments=appointments,
+                               file_presigned=file_presigned, host=HOSTNAME)
 
     @app.route("/records/<int:rid>/delete", methods=["POST"])
     def delete_record(rid):

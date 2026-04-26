@@ -95,13 +95,13 @@
           <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
           <div>
             <div class="fw-600 small">Current file:</div>
-            {% if record.file_url.endswith('.pdf') %}
-              <a href="{{ record.file_url }}" target="_blank" class="text-primary small">
+            {% if record.file_name and record.file_name.endswith('.pdf') %}
+              <a href="{{ file_presigned or record.file_url }}" target="_blank" class="text-primary small">
                 <i class="bi bi-file-earmark-pdf me-1"></i>{{ record.file_name }}
               </a>
             {% else %}
-              <a href="{{ record.file_url }}" target="_blank">
-                <img src="{{ record.file_url }}" alt="attached file"
+              <a href="{{ file_presigned or record.file_url }}" target="_blank">
+                <img src="{{ file_presigned or record.file_url }}" alt="attached file"
                      style="max-height:80px; border-radius:6px; border:1px solid #e2e8f0;">
               </a>
             {% endif %}
