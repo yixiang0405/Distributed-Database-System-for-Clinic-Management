@@ -62,6 +62,36 @@ def upload_file(file):
     return file_url, original_name
 
 
+def delete_file(file_url):
+    """
+    Delete a file from S3 (or local storage) given the URL we stored in the DB.
+    Safe to call with None or a missing file — never raises.
+    """
+    if not file_url:
+        return
+
+    bucket = os.getenv("S3_BUCKET")
+    try:
+        if bucket and file_url.startswith("https://"):
+            # --- AWS S3 delete ---
+            import boto3
+            region = os.getenv("AWS_REGION", "ap-southeast-1")
+            s3 = boto3.client("s3", region_name=region)
+            key = file_url.split(f"{bucket}.s3.{region}.amazonaws.com/")[1]
+            s3.delete_object(Bucket=bucket, Key=key)
+        elif file_url.startswith("/static/uploads/"):
+            # --- Local storage delete ---
+            local_path = os.path.join(
+                os.path.dirname(__file__),
+                file_url.lstrip("/")
+            )
+            if os.path.exists(local_path):
+                os.remove(local_path)
+    except Exception as e:
+        # Don't block the DB delete if file cleanup fails.
+        print(f"[delete_file] Warning: could not delete {file_url}: {e}")
+
+
 def get_presigned_url(file_url, expiry=3600):
     """
     If the file is on S3, return a pre-signed URL (expires in 1 hour).
@@ -229,6 +259,8 @@ def create_app():
             # Only replace file if a new one was uploaded
             uploaded = request.files.get("patient_file")
             if uploaded and uploaded.filename and allowed_file(uploaded.filename):
+                # Delete the old file before replacing it (avoids S3 orphans)
+                delete_file(r.file_url)
                 r.file_url, r.file_name = upload_file(uploaded)
 
             r.patient_id     = int(request.form["patient_id"])
@@ -252,6 +284,9 @@ def create_app():
     @app.route("/records/<int:rid>/delete", methods=["POST"])
     def delete_record(rid):
         r = MedicalRecord.query.get_or_404(rid)
+        # Remove the uploaded file (S3 object or local file) first.
+        # If this fails, we still proceed with the DB delete.
+        delete_file(r.file_url)
         db.session.delete(r)
         db.session.commit()
         return redirect(url_for("list_records"))
