@@ -16,8 +16,11 @@ import socket
 import uuid
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_login import (
+    LoginManager, login_user, logout_user, login_required, current_user
+)
 from sqlalchemy import text
-from models import db, Patient, Doctor, Appointment, MedicalRecord, Medicine
+from models import db, Patient, Doctor, Appointment, MedicalRecord, Medicine, User
 
 # --- S3 / file upload helpers ---
 # boto3 is only imported if S3 env vars are set.
@@ -129,9 +132,70 @@ def create_app():
         "pool_pre_ping": True,
         "pool_recycle": 280,
     }
+    # SECRET_KEY signs session cookies. MUST be identical on web-1 and web-2
+    # so a session created on one EC2 is accepted by the other behind the ALB.
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-only-change-me")
     db.init_app(app)
 
+    # --- Flask-Login setup ---
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = "login"
+    login_manager.login_message = "Please sign in to continue."
+    login_manager.login_message_category = "info"
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # Seed the default admin user the first time the app starts against an
+    # empty users table. Idempotent — safe to run on every boot.
+    with app.app_context():
+        try:
+            db.create_all()  # creates 'users' table if schema.sql wasn't re-run
+            if not User.query.filter_by(username="admin").first():
+                admin = User(username="admin", role="admin")
+                admin.set_password("admin123")
+                db.session.add(admin)
+                db.session.commit()
+                print("[seed] Created default admin user (username=admin, password=admin123)")
+        except Exception as e:
+            print(f"[seed] Could not seed admin user (DB not ready yet?): {e}")
+
     HOSTNAME = socket.gethostname()
+
+    # --- Auth: require login on every page except /login and /health ---
+    PUBLIC_ENDPOINTS = {"login", "health", "static"}
+
+    @app.before_request
+    def require_login():
+        if request.endpoint in PUBLIC_ENDPOINTS:
+            return  # public route, no auth needed
+        if not current_user.is_authenticated:
+            return redirect(url_for("login", next=request.path))
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if current_user.is_authenticated:
+            return redirect(url_for("list_patients"))
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            user = User.query.filter_by(username=username).first()
+            if user and user.check_password(password):
+                login_user(user)
+                next_url = request.args.get("next") or url_for("list_patients")
+                return redirect(next_url)
+            return render_template("login.html",
+                                   error="Invalid username or password",
+                                   host=HOSTNAME)
+        return render_template("login.html", host=HOSTNAME)
+
+    @app.route("/logout")
+    @login_required
+    def logout():
+        logout_user()
+        return redirect(url_for("login"))
 
     # --- Health check used by the ALB target group ---
     @app.route("/health")

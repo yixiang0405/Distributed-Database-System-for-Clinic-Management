@@ -6,6 +6,18 @@ CREATE DATABASE IF NOT EXISTS clinic
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE clinic;
 
+-- Users: application login accounts (clinic staff).
+-- Passwords are stored as werkzeug PBKDF2-SHA256 hashes, never plain text.
+-- The default admin password ('admin123') is seeded at the bottom of this
+-- file via the placeholder hash — replace it with a real hash before demo.
+CREATE TABLE IF NOT EXISTS users (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  username      VARCHAR(50)  UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role          VARCHAR(20)  DEFAULT 'staff',
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Patients: the core entity
 CREATE TABLE IF NOT EXISTS patients (
   id           INT AUTO_INCREMENT PRIMARY KEY,
@@ -83,3 +95,7 @@ INSERT INTO medicines (name, category, stock_qty, unit, expiry_date) VALUES
   ('Paracetamol 500mg', 'Analgesic',    200, 'tablets', '2027-01-01'),
   ('Amoxicillin 250mg', 'Antibiotic',    80, 'capsules','2026-12-01'),
   ('Cetirizine 10mg',   'Antihistamine', 150, 'tablets', '2027-06-01');
+
+-- Default admin user is created automatically by the Flask app on first
+-- startup (see ensure_default_admin() in app.py). Username: admin / Password: admin123.
+-- We do this in Python rather than SQL so werkzeug generates a valid PBKDF2 hash.
