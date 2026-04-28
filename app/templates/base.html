@@ -206,17 +206,7 @@
     }
     .empty-state i { font-size: 3rem; opacity: 0.4; display: block; margin-bottom: 0.5rem; }
 
-    /* Sticky-footer layout: body becomes a flex column so the footer
-       sits at the bottom of the viewport even on short pages (login). */
-    html, body { height: 100%; }
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    main.container { flex: 1 0 auto; }
     footer.app-footer {
-      flex-shrink: 0;
       background: #fff;
       border-top: 1px solid #e2e8f0;
       padding: 1rem 0;
@@ -266,14 +256,6 @@
       <a class="nav-btn {% if request.endpoint in ['list_medicines','new_medicine','edit_medicine'] %}active{% endif %}" href="/medicines">
         <i class="bi bi-capsule me-1"></i> Medicines
       </a>
-      {% if current_user.is_authenticated %}
-      <span class="nav-btn" style="background:rgba(255,255,255,0.1); cursor:default;">
-        <i class="bi bi-person-circle me-1"></i> {{ current_user.username }}
-      </span>
-      <a class="nav-btn" href="{{ url_for('logout') }}" title="Sign out">
-        <i class="bi bi-box-arrow-right me-1"></i> Logout
-      </a>
-      {% endif %}
     </div>
   </div>
 </nav>
